@@ -90,6 +90,12 @@ jupyter notebook notebooks/titanic_survival_prediction.ipynb
 ```
 Run all cells from top to bottom (`Kernel` $\rightarrow$ `Restart & Run All`) to see the step-by-step analysis and outputs.
 
+### 5. Launch Interactive Web Application
+```bash
+python app.py
+```
+Open your web browser and navigate to `http://127.0.0.1:5000` to interact with the live prediction dashboard!
+
 ---
 
 ## 📈 Results

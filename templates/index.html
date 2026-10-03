@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Titanic Survival Predictor | ML Classification</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #0284c7;
+            --primary-dark: #0369a1;
+            --secondary: #0f172a;
+            --accent: #38bdf8;
+            --bg-light: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .hero-banner {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0369a1 100%);
+            color: white;
+            padding: 2.5rem 0 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.25);
+        }
+
+        .hero-badge {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .card {
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            background: #ffffff;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card-header-custom {
+            background-color: #ffffff;
+            border-bottom: 1px solid #f1f5f9;
+            padding: 1.25rem 1.5rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #334155;
+            margin-bottom: 0.35rem;
+        }
+
+        .form-control, .form-select {
+            border-radius: 0.6rem;
+            border: 1.5px solid #cbd5e1;
+            padding: 0.65rem 0.85rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.12);
+        }
+
+        .preset-btn {
+            border-radius: 0.5rem;
+            font-size: 0.825rem;
+            font-weight: 600;
+            padding: 0.45rem 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-predict {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: white;
+            font-weight: 700;
+            font-size: 1.05rem;
+            padding: 0.85rem 1.5rem;
+            border-radius: 0.75rem;
+            border: none;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+            transition: all 0.2s ease;
+        }
+
+        .btn-predict:hover {
+            background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(2, 132, 199, 0.45);
+        }
+
+        /* Result styling */
+        .result-box {
+            border-radius: 1rem;
+            padding: 1.75rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .result-survived {
+            background: linear-gradient(145deg, #ecfdf5 0%, #d1fae5 100%);
+            border: 2px solid #10b981;
+            color: #065f46;
+        }
+
+        .result-perished {
+            background: linear-gradient(145deg, #fef2f2 0%, #fee2e2 100%);
+            border: 2px solid #ef4444;
+            color: #991b1b;
+        }
+
+        .status-icon {
+            font-size: 3.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .probability-bar-wrapper {
+            height: 12px;
+            background-color: rgba(0,0,0,0.1);
+            border-radius: 9999px;
+            overflow: hidden;
+            margin: 1.25rem 0 0.5rem;
+        }
+
+        .probability-bar-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .nav-tabs .nav-link {
+            font-weight: 600;
+            color: var(--text-muted);
+            border: none;
+            border-bottom: 3px solid transparent;
+            padding: 0.85rem 1.25rem;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            background: transparent;
+        }
+
+        .img-gallery-card {
+            border-radius: 0.75rem;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
+        }
+
+        .img-gallery-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px -3px rgba(0,0,0,0.1);
+        }
+
+        .stat-badge {
+            background-color: #f1f5f9;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Banner -->
+    <header class="hero-banner">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <div class="hero-badge mb-3">
+                        <i class="fa-solid fa-ship"></i> Random Forest Classifier • 82.68% Test Accuracy
+                    </div>
+                    <h1 class="display-6 fw-bold mb-2">Titanic Survival Predictor</h1>
+                    <p class="lead mb-0 text-white-50" style="font-size: 1.05rem;">
+                        Machine learning binary classification model built with Python & scikit-learn to estimate passenger survival probability.
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                    <a href="https://github.com/vinitkumarpatil/titanic-survival-prediction" target="_blank" class="btn btn-outline-light btn-sm px-3 py-2 fw-semibold rounded-pill">
+                        <i class="fa-brands fa-github me-1"></i> View on GitHub
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="container mb-5 flex-grow-1">
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-tabs mb-4" id="mainTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="predictor-tab" data-bs-toggle="tab" data-bs-target="#predictor" type="button" role="tab">
+                    <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Live Prediction Engine
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="insights-tab" data-bs-toggle="tab" data-bs-target="#insights" type="button" role="tab">
+                    <i class="fa-solid fa-chart-pie me-2"></i>Model Analytics & Visualizations
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab">
+                    <i class="fa-solid fa-circle-info me-2"></i>Project Details & Architecture
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="mainTabContent">
+            <!-- TAB 1: PREDICTOR -->
+            <div class="tab-pane fade show active" id="predictor" role="tabpanel">
+                <div class="row g-4">
+                    <!-- Form Column -->
+                    <div class="col-lg-7">
+                        <div class="card h-100">
+                            <div class="card-header-custom d-flex justify-content-between align-items-center">
+                                <span><i class="fa-solid fa-sliders text-primary me-2"></i>Passenger Attributes</span>
+                                <span class="badge bg-primary-subtle text-primary px-2 py-1">Inference Form</span>
+                            </div>
+                            <div class="card-body p-4">
+                                <!-- Persona Quick Presets -->
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small text-uppercase fw-bold">Quick Presets (Click to Load):</label>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button type="button" class="btn btn-outline-secondary preset-btn" onclick="applyPreset('rose')">
+                                            🌟 1st Class Female (Rose)
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary preset-btn" onclick="applyPreset('jack')">
+                                            ❄️ 3rd Class Male (Jack)
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary preset-btn" onclick="applyPreset('middle')">
+                                            👨‍👩‍👧 2nd Class Family Mom
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary preset-btn" onclick="applyPreset('worker')">
+                                            ⚓ 3rd Class Solo Worker
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <hr class="text-muted opacity-25 mb-4">
+
+                                <form id="predictionForm">
+                                    <div class="row g-3">
+                                        <!-- Passenger Class -->
+                                        <div class="col-md-6">
+                                            <label for="pclass" class="form-label">
+                                                <i class="fa-solid fa-crown text-warning me-1"></i> Ticket Class
+                                            </label>
+                                            <select class="form-select" id="pclass" required>
+                                                <option value="1">1st Class (Upper / Luxury)</option>
+                                                <option value="2">2nd Class (Middle Class)</option>
+                                                <option value="3" selected>3rd Class (Economy / Steerage)</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Sex -->
+                                        <div class="col-md-6">
+                                            <label for="sex" class="form-label">
+                                                <i class="fa-solid fa-venus-mars text-primary me-1"></i> Gender
+                                            </label>
+                                            <select class="form-select" id="sex" required>
+                                                <option value="male" selected>Male</option>
+                                                <option value="female">Female</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Age -->
+                                        <div class="col-md-6">
+                                            <label for="age" class="form-label d-flex justify-content-between">
+                                                <span><i class="fa-solid fa-user-clock text-info me-1"></i> Age</span>
+                                                <span id="ageDisplay" class="fw-bold text-primary">28 yrs</span>
+                                            </label>
+                                            <input type="range" class="form-range" id="age" min="1" max="80" value="28" oninput="document.getElementById('ageDisplay').textContent = this.value + ' yrs'">
+                                        </div>
+
+                                        <!-- Ticket Fare -->
+                                        <div class="col-md-6">
+                                            <label for="fare" class="form-label">
+                                                <i class="fa-solid fa-pound-sign text-success me-1"></i> Fare (£)
+                                            </label>
+                                            <input type="number" class="form-control" id="fare" step="0.1" min="0" max="600" value="15.0" required>
+                                        </div>
+
+                                        <!-- Siblings / Spouses -->
+                                        <div class="col-md-6">
+                                            <label for="sibsp" class="form-label">
+                                                <i class="fa-solid fa-people-group text-secondary me-1"></i> Siblings / Spouses Aboard
+                                            </label>
+                                            <input type="number" class="form-control" id="sibsp" min="0" max="8" value="0" required>
+                                        </div>
+
+                                        <!-- Parents / Children -->
+                                        <div class="col-md-6">
+                                            <label for="parch" class="form-label">
+                                                <i class="fa-solid fa-child text-secondary me-1"></i> Parents / Children Aboard
+                                            </label>
+                                            <input type="number" class="form-control" id="parch" min="0" max="6" value="0" required>
+                                        </div>
+
+                                        <!-- Embarkation Port -->
+                                        <div class="col-12">
+                                            <label for="embarked" class="form-label">
+                                                <i class="fa-solid fa-anchor text-danger me-1"></i> Port of Embarkation
+                                            </label>
+                                            <select class="form-select" id="embarked" required>
+                                                <option value="S" selected>Southampton (England)</option>
+                                                <option value="C">Cherbourg (France)</option>
+                                                <option value="Q">Queenstown / Cobh (Ireland)</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Submit Button -->
+                                        <div class="col-12 mt-4">
+                                            <button type="button" class="btn btn-predict w-100" id="btnSubmit" onclick="runPrediction()">
+                                                <i class="fa-solid fa-bolt me-2"></i> Compute Survival Prediction
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Prediction Result Column -->
+                    <div class="col-lg-5">
+                        <div class="card h-100">
+                            <div class="card-header-custom d-flex justify-content-between align-items-center">
+                                <span><i class="fa-solid fa-square-poll-vertical text-primary me-2"></i>Model Prediction</span>
+                                <span class="badge bg-secondary-subtle text-secondary px-2 py-1">Inference Result</span>
+                            </div>
+                            <div class="card-body p-4 d-flex flex-column justify-content-center">
+                                <div id="resultContainer" class="result-box result-perished">
+                                    <div class="status-icon" id="statusIcon">
+                                        <i class="fa-solid fa-circle-xmark text-danger"></i>
+                                    </div>
+                                    <h3 class="fw-bold mb-1" id="statusTitle">Did Not Survive</h3>
+                                    <p class="text-muted mb-3" id="statusSubtitle">High risk of non-survival predicted</p>
+
+                                    <div class="d-flex justify-content-between fw-bold small text-muted">
+                                        <span>Survival Probability</span>
+                                        <span id="probText">12.5%</span>
+                                    </div>
+                                    <div class="probability-bar-wrapper">
+                                        <div id="probBar" class="probability-bar-fill bg-danger" style="width: 12.5%;"></div>
+                                    </div>
+
+                                    <div class="mt-4 pt-3 border-top border-dark-subtle text-start">
+                                        <h6 class="fw-bold mb-2 small text-uppercase text-muted"><i class="fa-solid fa-brain me-1"></i> Key Prediction Factors:</h6>
+                                        <ul class="small mb-0 ps-3 text-secondary" id="factorList">
+                                            <li>Male passengers had significantly lower evacuation priority (~18.9% survival).</li>
+                                            <li>3rd class steerage quarters were distant from lifeboat decks.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Model Meta Cards -->
+                                <div class="row g-2 mt-3">
+                                    <div class="col-6">
+                                        <div class="stat-badge">
+                                            <div class="text-muted small">Classifier</div>
+                                            <div class="fw-bold text-dark">Random Forest</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="stat-badge">
+                                            <div class="text-muted small">Model Accuracy</div>
+                                            <div class="fw-bold text-success">82.68%</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: VISUALIZATIONS -->
+            <div class="tab-pane fade" id="insights" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card img-gallery-card h-100">
+                            <div class="card-header-custom">
+                                <i class="fa-solid fa-venus-mars text-primary me-2"></i>Survival by Gender
+                            </div>
+                            <div class="card-body p-3 text-center">
+                                <img src="/images/survival_by_gender.png" class="img-fluid rounded mb-2" alt="Survival by Gender">
+                                <p class="small text-muted mb-0">Over 74.2% of female passengers survived compared to 18.9% of male passengers.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card img-gallery-card h-100">
+                            <div class="card-header-custom">
+                                <i class="fa-solid fa-crown text-warning me-2"></i>Survival by Passenger Class
+                            </div>
+                            <div class="card-body p-3 text-center">
+                                <img src="/images/survival_by_pclass.png" class="img-fluid rounded mb-2" alt="Survival by Class">
+                                <p class="small text-muted mb-0">First-class passengers enjoyed a 63% survival rate versus only 24.2% for third class.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card img-gallery-card h-100">
+                            <div class="card-header-custom">
+                                <i class="fa-solid fa-ranking-star text-info me-2"></i>Random Forest Feature Importance
+                            </div>
+                            <div class="card-body p-3 text-center">
+                                <img src="/images/feature_importance.png" class="img-fluid rounded mb-2" alt="Feature Importance">
+                                <p class="small text-muted mb-0">Gender (Sex) is the dominant predictor, followed by Fare, Passenger Class, and Age.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card img-gallery-card h-100">
+                            <div class="card-header-custom">
+                                <i class="fa-solid fa-table-cells text-success me-2"></i>Test Confusion Matrices
+                            </div>
+                            <div class="card-body p-3 text-center">
+                                <img src="/images/confusion_matrices.png" class="img-fluid rounded mb-2" alt="Confusion Matrices">
+                                <p class="small text-muted mb-0">Comparison between Logistic Regression (79.89%) and Random Forest (82.68%) on test set.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: DETAILS -->
+            <div class="tab-pane fade" id="details" role="tabpanel">
+                <div class="card p-4">
+                    <h4 class="fw-bold mb-3"><i class="fa-solid fa-book-open text-primary me-2"></i>Project Summary & Architecture</h4>
+                    <p class="text-secondary">
+                        This machine learning system predicts Titanic passenger survival using supervised binary classification. Built end-to-end with Python, pandas, scikit-learn, and deployed using a lightweight Flask web service.
+                    </p>
+
+                    <div class="row g-4 my-2">
+                        <div class="col-md-4">
+                            <div class="p-3 border rounded h-100 bg-light">
+                                <h6 class="fw-bold text-primary"><i class="fa-solid fa-database me-2"></i>1. Data Cleaning</h6>
+                                <p class="small text-muted mb-0">Missing age imputed with median (28 yrs); missing embarkation port imputed with mode ('S'). Leaking/redundant attributes removed.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 border rounded h-100 bg-light">
+                                <h6 class="fw-bold text-success"><i class="fa-solid fa-code-compare me-2"></i>2. Model Selection</h6>
+                                <p class="small text-muted mb-0">Trained Logistic Regression (79.89%) and Random Forest (82.68%). Random Forest won due to superior non-linear feature interaction capture.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 border rounded h-100 bg-light">
+                                <h6 class="fw-bold text-warning"><i class="fa-solid fa-rocket me-2"></i>3. Production Inference</h6>
+                                <p class="small text-muted mb-0">Serialized model into <code>model.joblib</code> with real-time JSON prediction API and interactive web interface.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold mt-4 mb-2">Model Comparison Table</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Model Algorithm</th>
+                                    <th>Accuracy</th>
+                                    <th>Precision (Survived)</th>
+                                    <th>Recall (Survived)</th>
+                                    <th>F1-Score</th>
+                                    <th>Outcome</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Logistic Regression</strong></td>
+                                    <td>79.89%</td>
+                                    <td>0.77</td>
+                                    <td>0.73</td>
+                                    <td>0.75</td>
+                                    <td>Baseline</td>
+                                </tr>
+                                <tr class="table-success">
+                                    <td><strong>Random Forest Classifier</strong></td>
+                                    <td><strong>82.68%</strong></td>
+                                    <td><strong>0.81</strong></td>
+                                    <td><strong>0.76</strong></td>
+                                    <td><strong>0.78</strong></td>
+                                    <td><strong>Winner</strong> 🏆</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-top py-3 mt-auto">
+        <div class="container text-center text-muted small">
+            Designed for Machine Learning Portfolio • Built with Python, scikit-learn & Flask • Author: <strong>Vinitkumar Patil</strong>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- App Logic Script -->
+    <script>
+        const PRESETS = {
+            rose: { pclass: "1", sex: "female", age: 22, fare: 150.0, sibsp: 0, parch: 1, embarked: "S" },
+            jack: { pclass: "3", sex: "male", age: 20, fare: 8.05, sibsp: 0, parch: 0, embarked: "S" },
+            middle: { pclass: "2", sex: "female", age: 30, fare: 26.0, sibsp: 1, parch: 1, embarked: "S" },
+            worker: { pclass: "3", sex: "male", age: 32, fare: 7.75, sibsp: 0, parch: 0, embarked: "Q" }
+        };
+
+        function applyPreset(key) {
+            const data = PRESETS[key];
+            if (!data) return;
+
+            document.getElementById('pclass').value = data.pclass;
+            document.getElementById('sex').value = data.sex;
+            document.getElementById('age').value = data.age;
+            document.getElementById('ageDisplay').textContent = data.age + ' yrs';
+            document.getElementById('fare').value = data.fare;
+            document.getElementById('sibsp').value = data.sibsp;
+            document.getElementById('parch').value = data.parch;
+            document.getElementById('embarked').value = data.embarked;
+
+            runPrediction();
+        }
+
+        async function runPrediction() {
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Computing...';
+
+            const payload = {
+                pclass: parseInt(document.getElementById('pclass').value),
+                sex: document.getElementById('sex').value,
+                age: parseFloat(document.getElementById('age').value),
+                fare: parseFloat(document.getElementById('fare').value),
+                sibsp: parseInt(document.getElementById('sibsp').value),
+                parch: parseInt(document.getElementById('parch').value),
+                embarked: document.getElementById('embarked').value
+            };
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                updateResultUI(result);
+            } catch (err) {
+                console.error("Prediction error:", err);
+                alert("Failed to fetch prediction. Make sure server is running.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-bolt me-2"></i> Compute Survival Prediction';
+            }
+        }
+
+        function updateResultUI(res) {
+            const container = document.getElementById('resultContainer');
+            const icon = document.getElementById('statusIcon');
+            const title = document.getElementById('statusTitle');
+            const subtitle = document.getElementById('statusSubtitle');
+            const probText = document.getElementById('probText');
+            const probBar = document.getElementById('probBar');
+            const factorList = document.getElementById('factorList');
+
+            const survived = res.prediction === "Survived";
+            const probPct = (res.survival_probability * 100).toFixed(1);
+
+            probText.textContent = probPct + '%';
+            probBar.style.width = probPct + '%';
+
+            factorList.innerHTML = '';
+            (res.factors || []).forEach(f => {
+                const li = document.createElement('li');
+                li.textContent = f;
+                factorList.appendChild(li);
+            });
+
+            if (survived) {
+                container.className = 'result-box result-survived';
+                icon.innerHTML = '<i class="fa-solid fa-circle-check text-success"></i>';
+                title.textContent = 'Survived';
+                title.className = 'fw-bold mb-1 text-success';
+                subtitle.textContent = `High survival likelihood (${probPct}% confidence)`;
+                probBar.className = 'probability-bar-fill bg-success';
+            } else {
+                container.className = 'result-box result-perished';
+                icon.innerHTML = '<i class="fa-solid fa-circle-xmark text-danger"></i>';
+                title.textContent = 'Did Not Survive';
+                title.className = 'fw-bold mb-1 text-danger';
+                subtitle.textContent = `Low survival likelihood (${(100 - probPct).toFixed(1)}% mortality probability)`;
+                probBar.className = 'probability-bar-fill bg-danger';
+            }
+        }
+
+        // Run default prediction on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            runPrediction();
+        });
+    </script>
+</body>
+</html>
