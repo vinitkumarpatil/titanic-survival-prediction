@@ -6,18 +6,13 @@ from flask import Flask, render_template, request, jsonify, send_from_directory
 
 app = Flask(__name__, template_folder="templates")
 
-# Path configurations
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "model.joblib")
-IMAGES_DIR = os.path.join(BASE_DIR, "images")
 
-# Load model or fallback train
-def load_or_train_model():
+def get_model():
     if os.path.exists(MODEL_PATH):
-        print(f"Loading trained model from {MODEL_PATH}")
         return joblib.load(MODEL_PATH)
     
-    print("Training model on startup...")
     from sklearn.ensemble import RandomForestClassifier
     data_path = os.path.join(BASE_DIR, "data", "titanic.csv")
     df = pd.read_csv(data_path)
@@ -36,15 +31,11 @@ def load_or_train_model():
     joblib.dump(rf, MODEL_PATH)
     return rf
 
-model = load_or_train_model()
+model = get_model()
 
 @app.route('/')
 def home():
     return render_template('index.html')
-
-@app.route('/images/<path:filename>')
-def serve_image(filename):
-    return send_from_directory(IMAGES_DIR, filename)
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -54,15 +45,18 @@ def predict():
         pclass = int(data.get('pclass', 3))
         raw_sex = str(data.get('sex', 'male')).lower().strip()
         sex = 1 if raw_sex in ['female', '1', 'f'] else 0
-        age = float(data.get('age', 28.0))
+        age = float(data.get('age', 25.0))
         sibsp = int(data.get('sibsp', 0))
         parch = int(data.get('parch', 0))
-        fare = float(data.get('fare', 15.0))
+        
+        # If fare not provided, default by class
+        default_fares = {1: 85.0, 2: 22.0, 3: 8.05}
+        fare = float(data.get('fare', default_fares.get(pclass, 15.0)))
+        
         raw_emb = str(data.get('embarked', 'S')).upper().strip()
         emb_map = {'S': 0, 'C': 1, 'Q': 2}
         embarked = emb_map.get(raw_emb, 0)
 
-        # Feature dataframe matching training columns
         features = pd.DataFrame([{
             'pclass': pclass,
             'sex': sex,
@@ -77,37 +71,28 @@ def predict():
         probs = model.predict_proba(features)[0]
         survival_prob = float(probs[1])
 
-        # Generate intelligent contextual feedback factors
+        # Short, simple, friendly explanations
         factors = []
         if sex == 1:
-            factors.append("Female passenger: strongly benefited from the 'women and children first' maritime protocol (~74.2% historical survival).")
+            factors.append("Women were prioritized for lifeboats under the 'women and children first' order.")
         else:
-            factors.append("Male passenger: lower evacuation priority reduced overall survival odds (~18.9% historical survival).")
+            factors.append("Men were directed to step back during lifeboat boarding.")
 
         if pclass == 1:
-            factors.append("First-class ticket: upper deck cabins provided direct, immediate access to lifeboat stations (~63% survival).")
+            factors.append("1st class passengers had cabins closest to the top boat deck.")
         elif pclass == 2:
-            factors.append("Second-class ticket: moderate deck proximity with ~47.3% survival rate.")
+            factors.append("2nd class passengers had moderate access to emergency boats.")
         else:
-            factors.append("Third-class steerage: lower deck quarters faced locked gates and delayed evacuation warning (~24.2% survival).")
+            factors.append("3rd class cabins were located far below on lower decks.")
 
-        if age < 14:
-            factors.append("Child passenger: prioritized into lifeboats during the initial loading phase.")
-        elif age > 60:
-            factors.append("Senior passenger: physical mobility in cold water presented survival challenges.")
-
-        if fare > 75:
-            factors.append(f"High ticket fare (£{fare:.2f}): correlated with high socioeconomic standing and privileged boat access.")
-
-        if sibsp + parch > 3:
-            factors.append("Large family unit: keeping family together introduced evacuation coordination delays.")
+        if age <= 12:
+            factors.append("Children were given early access to lifeboats.")
 
         return jsonify({
             "status": "success",
             "prediction": "Survived" if pred == 1 else "Did Not Survive",
             "survival_probability": round(survival_prob, 4),
-            "confidence": f"{max(survival_prob, 1 - survival_prob) * 100:.1f}%",
-            "factors": factors[:3]
+            "factors": factors[:2]
         })
 
     except Exception as e:
@@ -117,6 +102,5 @@ def predict():
         }), 400
 
 if __name__ == '__main__':
-    print("Starting Titanic Survival Predictor Web Application...")
-    print("Serving on http://127.0.0.1:5000")
+    print("Serving simple Titanic Predictor on http://127.0.0.1:5000")
     app.run(host='127.0.0.1', port=5000, debug=False)
